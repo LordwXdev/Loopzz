@@ -8,10 +8,6 @@ Full-stack music and live streaming platform.
 cd amplify
 docker-compose up --build
 ```
-
-- Frontend: http://localhost:3000
-- Backend: http://localhost:4000
-
 ## Features
 
 - JWT Auth with bcrypt password hashing
