@@ -1,0 +1,145 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ARTIST
+  ADMIN
+}
+
+enum TransactionType {
+  TIP_SENT
+  TIP_RECEIVED
+  REFERRAL_REWARD
+  WITHDRAWAL
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  username  String   @unique
+  role      Role     @default(USER)
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  artistProfile ArtistProfile?
+  videos        Video[]
+  tipsSent      Tip[]          @relation("TipsSent")
+  transactions  Transaction[]
+  referralsMade Referral[]     @relation("Referrer")
+  referredBy    Referral?      @relation("Referred")
+
+  @@map("users")
+}
+
+model ArtistProfile {
+  id       String  @id @default(uuid())
+  userId   String  @unique
+  bio      String  @default("")
+  verified Boolean @default(false)
+  earnings Float   @default(0)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracks       Track[]
+  liveSessions LiveSession[]
+  tipsReceived Tip[]         @relation("TipsReceived")
+
+  @@map("artist_profiles")
+}
+
+model Video {
+  id        String   @id @default(uuid())
+  userId    String
+  url       String
+  caption   String   @default("")
+  views     Int      @default(0)
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("videos")
+}
+
+model Track {
+  id       String @id @default(uuid())
+  artistId String
+  url      String
+  title    String
+  plays    Int    @default(0)
+  duration Int    @default(0)
+
+  artist ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@map("tracks")
+}
+
+model LiveSession {
+  id        String    @id @default(uuid())
+  artistId  String
+  title     String    @default("Live Session")
+  isActive  Boolean   @default(true)
+  viewers   Int       @default(0)
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  artist ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@map("live_sessions")
+}
+
+model Tip {
+  id         String   @id @default(uuid())
+  fromUserId String
+  toArtistId String
+  amount     Float
+  message    String?
+  createdAt  DateTime @default(now())
+
+  fromUser User          @relation("TipsSent", fields: [fromUserId], references: [id])
+  toArtist ArtistProfile @relation("TipsReceived", fields: [toArtistId], references: [id])
+
+  @@map("tips")
+}
+
+model Referral {
+  id           String   @id @default(uuid())
+  referrerId   String
+  referredId   String   @unique
+  rewardEarned Float    @default(0)
+  createdAt    DateTime @default(now())
+
+  referrer User @relation("Referrer", fields: [referrerId], references: [id])
+  referred User @relation("Referred", fields: [referredId], references: [id])
+
+  @@map("referrals")
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  userId    String
+  type      TransactionType
+  amount    Float
+  status    TransactionStatus @default(PENDING)
+  metadata  String?
+  createdAt DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
+}
