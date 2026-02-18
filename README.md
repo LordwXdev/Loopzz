@@ -4,7 +4,7 @@ A full-stack web application where artists share music, go live, and earn tips â
 
 Built with **Next.js 14**, **NestJS**, **PostgreSQL**, **Prisma**, **Socket.IO**, and **Docker**.
 
----
+----
 
 ## ðŸ“‘ Table of Contents
 
